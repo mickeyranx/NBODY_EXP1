@@ -23,6 +23,11 @@ using namespace Customvectors;
 
 //this function reads a file containing the initial values of the bodies in the x y z vx vy vz m format, and parses the data into a list of bodies
 static std::vector<Body> setup(std::string fileName) {
+	//--------------------------------------------------
+	//          parse starting data from file 
+	//               into a list of bodies
+	//--------------------------------------------------
+
 	//open file with given file name
 	ifstream file(fileName);
 	
@@ -37,6 +42,7 @@ static std::vector<Body> setup(std::string fileName) {
 	double vz;
 	double m;
 	//read doubles from file until there are no more values left
+
 	for (int i = 0; (file >> x >> y >> z >> vx >> vy >> vz >> m); i++)
 	{
 		Vector pos = Vector(x, y, z);
@@ -47,6 +53,33 @@ static std::vector<Body> setup(std::string fileName) {
 
 	}
 	return bodies;
+	
+	//--------------------------------------------------
+	//          calculate COM reference
+	//--------------------------------------------------
+	Vector r_s = Vector(0, 0, 0);
+	Vector v_s = Vector(0, 0, 0);
+	double M = 0;
+	for (int i = 0; i < bodies.size(); i++)
+	{
+		Body b = bodies[i];
+		double m = b.getMass();
+		r_s = r_s + b.getPosition() * m;
+		v_s = v_s + b.getVelocity() * m;
+		M += m; //should add up to 1 in the end
+	}
+	cout << "total Mass of system is " << M << endl;
+
+	vector<Body> bodies_COM = {};
+	for (int i = 0; i < bodies.size(); i++)
+	{
+		Body b = bodies[i];
+		Vector vel_COM =  (b.getVelocity() - v_s) * (1 / M);
+		Vector pos_COM = (b.getPosition() - r_s) * (1 / M);
+		bodies_COM.push_back(Body(b.getMass(), pos_COM, vel_COM));
+	}
+
+	return bodies_COM;
 
 }
 
@@ -54,17 +87,21 @@ static std::vector<Body> setup(std::string fileName) {
 //main function 
 int main() {
 	clock_t start = clock();
-	//project path
-
-	//pointer to path string (path to write data) change to local path 
-	//TODO: make this independet on environment
+	/*
+		TODO: 
+		-implement reading N, nu and t_max
+		-implement dynamic time step
+	
+	*/
+	//	
+	
 	string outputPath = "output.txt";
 
 	//inputfile name
 	string inputName = "2body.txt";
 
 	//timestep dt
-	double dt = 1;
+	double dt = 0.3;
 
 	//number of integrations
 	int n = 20;

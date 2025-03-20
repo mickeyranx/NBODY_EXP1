@@ -6,7 +6,7 @@ namespace Customvectors{
 	class Vector
 	{
 	private:
-		float length;
+		double length;
 		double x;
 		double y;
 		double z;
