@@ -20,7 +20,7 @@ void NbodyIntegrator::startIntegration(std::vector<Body> bodies, double timeStep
 
 }
 
-Customvectors::Vector NbodyIntegrator::calculateAcceleration(std::vector<Body> bodies, Body reference_body, int N, int j) {
+Customvectors::Vector NbodyIntegrator::calculateAcceleration(std::vector<Body> &bodies, Body &reference_body, int N, int j) {
 	Customvectors::Vector a = Customvectors::Vector(0,0,0);
 
 	//iterate over all bodies
@@ -46,7 +46,7 @@ Customvectors::Vector NbodyIntegrator::calculateAcceleration(std::vector<Body> b
 
 
 
-Customvectors::Vector NbodyIntegrator::calculateJerk(std::vector<Body> bodies, Body reference_body, int N, int j) {
+Customvectors::Vector NbodyIntegrator::calculateJerk(std::vector<Body> &bodies, Body &reference_body, int N, int j) {
 	Customvectors::Vector a_dot = Customvectors::Vector(0, 0, 0);
 	//iterate over all bodies
 	for (int i = 0; i < N; i++)
@@ -138,3 +138,20 @@ double NbodyIntegrator::calculateMajorSemiAxis(Customvectors::Vector j, Customve
 	return (j * j) / (1 - e * e);
 
 }
+
+double NbodyIntegrator::timeStepCurvature(std::vector<Body> &bodies, int N,double time_step) {
+	
+	std::vector<double> vals = {};
+	for (int i = 0; i < N; i++)
+	{
+		Body b = bodies[i];
+		Customvectors::Vector acc = calculateAcceleration(bodies, b, N, i);
+		Customvectors::Vector jerk = calculateJerk(bodies, b, N, i);
+		vals.push_back(acc.getLength()/jerk.getLength());
+	}
+	
+	return time_step * *std::min_element(vals.begin(), vals.end());
+
+
+}
+

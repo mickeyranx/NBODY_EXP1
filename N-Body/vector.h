@@ -1,5 +1,8 @@
 #pragma once
-
+/*
+this is a custom vector class
+for making life easier
+*/
 namespace Customvectors{
 
 

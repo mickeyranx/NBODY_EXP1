@@ -8,7 +8,6 @@
 #include <vector>
 #include <string>
 #include "NbodyIntegrator.h"
-#include "TimeStepFunction.h"
 #include "Euler.h"
 #include "TimeStep.h"
 
@@ -90,34 +89,47 @@ int main() {
 	/*
 		TODO: 
 		-implement reading N, nu and t_max
-		-implement dynamic time step
-	
+		-implement dynamic time step for Hermit and RK4
+		-implement minimum time step for dynamic TS
 	*/
-	//	
 	
+	//------------------------------------------------
+	//       setup and load data from files
+	//------------------------------------------------
 	string outputPath = "output.txt";
 
-	//inputfile name
+	//inputfile-name for body data 
 	string inputName = "2body.txt";
+	//inputfile-name for integration data
+	string inputName2 = "";
 
 	//timestep dt
-	double dt = 0.3;
+	double eta = 0.3;
 
 	//number of integrations
 	int n = 20;
-
-	//
 	std::vector<Body> startingImage = setup(inputName);
-
+	//------------------------------------------------
+	//       select integrator and time step
+	//				  calculation
+	//------------------------------------------------
+	/*
+	   available Time steps:
+			-LINEAR
+			-QUADRATIC
+			-CURVATURE
+			(-HERMIT)
+			(-RKFOUR)
+	
+	*/
 	//switch between integrators via commenting
 	Euler integrator = Euler(TimeStep::LINEAR);
 	//NbodyIntegrator integrator = new EulerChromer();
 	//NbodyIntegrator integrator = new ();
 
 	//Start the integration
-	integrator.startIntegration(startingImage, dt, n, outputPath);
+	integrator.startIntegration(startingImage, eta, n, outputPath);
 
-	//TODO: 
 
 	clock_t end = clock();
 	double elapsed = double(end - start) / CLOCKS_PER_SEC;

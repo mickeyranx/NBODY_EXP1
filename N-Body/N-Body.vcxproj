@@ -137,15 +137,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Body.h" />
-    <ClInclude Include="CurvatureTS.h" />
     <ClInclude Include="Euler.h" />
     <ClInclude Include="EulerChromer.h" />
     <ClInclude Include="Integrator.h" />
-    <ClInclude Include="LinearTS.h" />
     <ClInclude Include="NbodyIntegrator.h" />
-    <ClInclude Include="QuadraticTS.h" />
     <ClInclude Include="TimeStep.h" />
-    <ClInclude Include="TimeStepFunction.h" />
     <ClInclude Include="vector.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

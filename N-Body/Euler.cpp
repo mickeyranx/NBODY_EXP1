@@ -31,9 +31,10 @@ std::vector<Body> Euler::integrate(std::vector<Body> bodies, double timeStep)
 	return newImage;
 }
 
-void Euler::startIntegration(std::vector<Body> initalImage, double timeStep, int iterations,std::string output_file)
+void Euler::startIntegration(std::vector<Body> initalImage, double eta, int iterations,std::string output_file)
 {
 	int N = initalImage.size();
+	double time_step = eta;
 	//-------------------------------------
 	//        file setup
 	//-------------------------------------
@@ -57,9 +58,9 @@ void Euler::startIntegration(std::vector<Body> initalImage, double timeStep, int
 	{
 		
 		
-		std::vector<Body> newImage = integrate(previousImage, timeStep);
+		std::vector<Body> newImage = integrate(previousImage, time_step);
 
-		File << timeStep * i << "\t";
+		File << time_step * i << "\t";
 		for (Body b : newImage) {
 			File << b.getPosition().getX() << "\t" << b.getPosition().getY() << "\t" << b.getPosition().getZ() << "\t";
 			
@@ -76,12 +77,23 @@ void Euler::startIntegration(std::vector<Body> initalImage, double timeStep, int
 			double a = calculateMajorSemiAxis(j, e);
 			File << j.getLength() << "\t" << e.getLength() << "\t" << a;
 		}
-
-		 
-		
-
-
 		File << "\n";
+		//--------------------------------------
+		//     calculate next time step
+		//--------------------------------------
+		
+		switch (getTimeStep()) {
+		case TimeStep::LINEAR:
+			break;
+		case TimeStep::QUADRATIC:
+			break;
+		case TimeStep::CURVATURE:
+			time_step = timeStepCurvature(newImage,N, time_step);
+			break;
+		}
+
+
+		
 		previousImage = newImage; //prepare for next iteration
 
 		

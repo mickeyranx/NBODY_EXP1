@@ -3,7 +3,6 @@
 #include "TimeStep.h"
 #include "Body.h"
 #include <vector>
-#include <any>
 #include <iomanip>
 #include <string>
 
@@ -26,15 +25,22 @@ public:
 
 	//virtual void simulate(int Iterations, int N);
 	//List of bodies, N = number of bodies, j ist the current body
-	static Customvectors::Vector calculateAcceleration(std::vector<Body> bodies, Body reference_body, int N, int j);
+	static Customvectors::Vector calculateAcceleration(std::vector<Body> &bodies, Body &reference_body, int N, int j);
 	//List of bodies, N = number of bodies, j ist the current body
-	static Customvectors::Vector calculateJerk(std::vector<Body> bodies, Body reference_body, int N, int j);
+	static Customvectors::Vector calculateJerk(std::vector<Body> &bodies, Body &reference_body, int N, int j);
 
-	
+	TimeStep getTimeStep() { return tsf; }
+
+
+	//------------------------------------------------------
+	//			time step
+	//------------------------------------------------------
 			
 	static double timeStepLinear(double t) { return t; };
 
 	static double timeStepQuadratic(double t) { return pow(t, 2); };
+
+	double timeStepCurvature(std::vector<Body>& bodies, int N ,double time_step);
 
 	//------------------------------------------------------
 	//			conserved quantities
@@ -53,9 +59,7 @@ public:
 	//calculate the MajorSemiAxis of the orbit with the Runge-Lenz vector e and the angular momentum j
 	double calculateMajorSemiAxis(Customvectors::Vector j, Customvectors::Vector e);
 
-	//static double timeStepCurvature(double t);
-
-	//start integration 
+	
 
 
 };
