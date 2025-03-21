@@ -128,7 +128,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Body.cpp" />
-    <ClCompile Include="CurvatureTS.cpp" />
     <ClCompile Include="Euler.cpp" />
     <ClCompile Include="EulerChromer.cpp" />
     <ClCompile Include="main.cpp" />

@@ -10,6 +10,7 @@
 #include "NbodyIntegrator.h"
 #include "Euler.h"
 #include "TimeStep.h"
+#include <tuple>
 
 
 using namespace std;
@@ -19,16 +20,16 @@ using namespace Customvectors;
 
 
 
-
-//this function reads a file containing the initial values of the bodies in the x y z vx vy vz m format, and parses the data into a list of bodies
-static std::vector<Body> setup(std::string fileName) {
+//this function reads a file containing the initial values of the bodies in the x y z vx vy vz m format
+//             and parses the COM-transformed data into a list of bodies
+static std::vector<Body> setup(std::string file_name) {
 	//--------------------------------------------------
 	//          parse starting data from file 
 	//               into a list of bodies
 	//--------------------------------------------------
 
 	//open file with given file name
-	ifstream file(fileName);
+	ifstream file(file_name);
 	
 	//initialize list  
 	std::vector<Body> bodies;
@@ -51,7 +52,8 @@ static std::vector<Body> setup(std::string fileName) {
 		bodies.push_back(body);
 
 	}
-	return bodies;
+	
+
 	
 	//--------------------------------------------------
 	//          calculate COM reference
@@ -67,7 +69,7 @@ static std::vector<Body> setup(std::string fileName) {
 		v_s = v_s + b.getVelocity() * m;
 		M += m; //should add up to 1 in the end
 	}
-	cout << "total Mass of system is " << M << endl;
+	cout << "total mass is " << M << endl;
 
 	vector<Body> bodies_COM = {};
 	for (int i = 0; i < bodies.size(); i++)
@@ -77,6 +79,7 @@ static std::vector<Body> setup(std::string fileName) {
 		Vector pos_COM = (b.getPosition() - r_s) * (1 / M);
 		bodies_COM.push_back(Body(b.getMass(), pos_COM, vel_COM));
 	}
+	
 
 	return bodies_COM;
 
@@ -96,19 +99,22 @@ int main() {
 	//------------------------------------------------
 	//       setup and load data from files
 	//------------------------------------------------
-	string outputPath = "output.txt";
-
+	string output_path = "output.txt";
+	
 	//inputfile-name for body data 
-	string inputName = "2body.txt";
+	string input_name = "2body.txt";
 	//inputfile-name for integration data
-	string inputName2 = "";
+	string input_name2 = "";
+	
+	//ifstream File(input_name2);
 
+	
 	//timestep dt
 	double eta = 0.3;
 
 	//number of integrations
 	int n = 20;
-	std::vector<Body> startingImage = setup(inputName);
+	std::vector<Body> starting_image = setup("input_files/" + input_name);
 	//------------------------------------------------
 	//       select integrator and time step
 	//				  calculation
@@ -128,7 +134,7 @@ int main() {
 	//NbodyIntegrator integrator = new ();
 
 	//Start the integration
-	integrator.startIntegration(startingImage, eta, n, outputPath);
+	integrator.startIntegration(starting_image, eta, n, output_path);
 
 
 	clock_t end = clock();
