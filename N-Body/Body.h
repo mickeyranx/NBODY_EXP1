@@ -13,6 +13,8 @@ public:
 	void setMass(double mass) { this->mass = mass; };
 	double getMass() { return mass; };
 	void setPosition(Vector position) { this->position = position; };
+	void alterPosition(Vector r) { position = position + r; };
+	void alterVelocity(Vector v) { velocity = velocity + v; };
 	Vector getPosition() { return position; };
 	Vector getVelocity() { return velocity; }
 	void setVelocity(Vector velocity) { this->velocity = velocity; }

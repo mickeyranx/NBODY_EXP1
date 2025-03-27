@@ -130,18 +130,28 @@
     <ClCompile Include="Body.cpp" />
     <ClCompile Include="Euler.cpp" />
     <ClCompile Include="EulerChromer.cpp" />
+    <ClCompile Include="Hermit.cpp" />
+    <ClCompile Include="Heun.cpp" />
+    <ClCompile Include="IteratedHermit.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NbodyIntegrator.cpp" />
+    <ClCompile Include="RK4.cpp" />
     <ClCompile Include="vector.cpp" />
+    <ClCompile Include="VelocityVerlet.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Body.h" />
     <ClInclude Include="Euler.h" />
     <ClInclude Include="EulerChromer.h" />
+    <ClInclude Include="Hermit.h" />
+    <ClInclude Include="Heun.h" />
     <ClInclude Include="Integrator.h" />
+    <ClInclude Include="IteratedHermit.h" />
     <ClInclude Include="NbodyIntegrator.h" />
+    <ClInclude Include="RK4.h" />
     <ClInclude Include="TimeStep.h" />
     <ClInclude Include="vector.h" />
+    <ClInclude Include="VelocityVerlet.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

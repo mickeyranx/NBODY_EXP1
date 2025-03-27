@@ -94,6 +94,7 @@ int main() {
 		-implement reading N, nu and t_max
 		-implement dynamic time step for Hermit and RK4
 		-implement minimum time step for dynamic TS
+		-kickdrift for Velocity-Verlet
 	*/
 	
 	//------------------------------------------------

@@ -33,7 +33,19 @@
     <ClCompile Include="EulerChromer.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="CurvatureTS.cpp">
+    <ClCompile Include="VelocityVerlet.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Hermit.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="IteratedHermit.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="RK4.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Heun.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
@@ -57,6 +69,21 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="TimeStep.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="VelocityVerlet.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Hermit.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="IteratedHermit.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Heun.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="RK4.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
