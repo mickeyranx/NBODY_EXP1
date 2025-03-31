@@ -91,10 +91,8 @@ int main() {
 	clock_t start = clock();
 	/*
 		TODO: 
-		-implement reading N, nu and t_max
-		-implement dynamic time step for Hermit and RK4
+		-implement dynamic time step for  RK4
 		-implement minimum time step for dynamic TS
-		-kickdrift for Velocity-Verlet
 	*/
 	
 	//------------------------------------------------
@@ -105,17 +103,26 @@ int main() {
 	//inputfile-name for body data 
 	string input_name = "2body.txt";
 	//inputfile-name for integration data
-	string input_name2 = "";
-	
-	//ifstream File(input_name2);
-
-	
+	//string input_name2 = "pla3.txt";
+	string input_name2 = "pl.1k.txt";
+	//string input_name2 = "pl.100.txt";
+	//string input_name2 = "in2.txt";
+	/*
+	ifstream File("input_files/" + input_name2);
+	int N;
+	double t_max;
+	double eta;
+	File >> N >> t_max >> eta;
+	cout << N << endl;
+	cout << t_max << " " << eta;
 	//timestep dt
-	double eta = 0.3;
+	*/
 
+	/*
 	//number of integrations
 	int n = 20;
 	std::vector<Body> starting_image = setup("input_files/" + input_name);
+	*/
 	//------------------------------------------------
 	//       select integrator and time step
 	//				  calculation
@@ -125,19 +132,19 @@ int main() {
 			-LINEAR
 			-QUADRATIC
 			-CURVATURE
-			(-HERMIT)
+			-HERMIT (exclusive for hermit and iterated hermit)
 			(-RKFOUR)
 	
 	*/
 	//switch between integrators via commenting
-	Euler integrator = Euler(TimeStep::LINEAR);
+	//Euler integrator = Euler(TimeStep::LINEAR);
 	//NbodyIntegrator integrator = new EulerChromer();
 	//NbodyIntegrator integrator = new ();
 
 	//Start the integration
-	integrator.startIntegration(starting_image, eta, n, output_path);
-
-
+	//integrator.startIntegration(starting_image, eta, n, output_path);
+	
+	
 	clock_t end = clock();
 	double elapsed = double(end - start) / CLOCKS_PER_SEC;
 	printf("execution time: %.3f sec", elapsed);

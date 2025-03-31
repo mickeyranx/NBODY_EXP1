@@ -1,19 +1,18 @@
 #include "IteratedHermit.h"
-#include <iostream>
-//only works in C++ version >= 17
-#include <variant>
 
 
 
 
 
-std::vector<Body> IteratedHermit::integrate(std::vector<Body> bodies, double dt)
+std::tuple<std::vector<Body>, double> IteratedHermit::integrate(std::vector<Body> bodies, double dt, int N)
 {
-	int N = bodies.size();
+	
 
 	std::vector<Body> new_temp_image = {};
 	std::vector<Customvectors::Vector> a_ns = {};
 	std::vector<Customvectors::Vector> a_n_dots = {};
+	std::vector<Customvectors::Vector> a_3s = {};
+	std::vector<Customvectors::Vector> a_2s = {};
 	
 	for (int i = 0; i < N; i++)
 	{
@@ -31,7 +30,7 @@ std::vector<Body> IteratedHermit::integrate(std::vector<Body> bodies, double dt)
 		new_temp_image.push_back(current_body);
 
 	}
-	std::vector<Body> newImage = {};
+	std::vector<Body> new_image = {};
 	for (int i = 0; i < N; i++)
 	{
 		Body current_body = new_temp_image[i];
@@ -45,32 +44,61 @@ std::vector<Body> IteratedHermit::integrate(std::vector<Body> bodies, double dt)
 		Customvectors::Vector v_nn_p = current_body.getVelocity();
 		Customvectors::Vector v_n = old_body.getVelocity();
 		Customvectors::Vector r_n = old_body.getPosition();
-		/*
-		//Hermit-Interpolation
-		Customvectors::Vector a_2 = (a_n - a_nn_p) * (-3.0 / (dt * dt)) - (a_n_dot * 2.0 + a_nn_p_dot) * (1 / dt);
-		Customvectors::Vector a_3 = (a_n - a_nn_p) * (2.0 / (dt * dt * dt)) + (a_n_dot + a_nn_p_dot) * (1 / (dt * dt));
-		*/
+
+		if (getTimeStep() == TimeStep::CURVATUREHERMIT) {//calculate Hermit-Interpolation if needed for time_step
+			Customvectors::Vector a_2 = ((a_n - a_nn_p) * (-3.0 / (dt * dt)) - (a_n_dot * 2.0 + a_nn_p_dot) * (1 / dt)) * 2.0 ;
+			Customvectors::Vector a_3 = ((a_n - a_nn_p) * (2.0 / (dt * dt * dt)) + (a_n_dot + a_nn_p_dot) * (1 / (dt * dt))) * 6.0;
+			a_2s.push_back(a_2);
+			a_3s.push_back(a_3);
+		}
 		//correction
 		Customvectors::Vector v_nn_c = v_n + (a_nn_p + a_n) * 0.5 * dt + (a_nn_p_dot - a_n_dot) * (dt * dt) * (1.0/12.0);
 		Customvectors::Vector r_nn_c = r_n + (v_nn_c + v_n) * 0.5 * dt + (a_nn_p - a_n) * (dt * dt) * (1.0 / 12.0);
 		current_body.setVelocity(v_nn_c);
 		current_body.setPosition(r_nn_c);
-		newImage.push_back(current_body);
+		new_image.push_back(current_body);
 	}
 
-	return newImage;
+	//------------------------------------------------
+	//          determine next time step
+	//------------------------------------------------
+	double new_time_step;
+	double max_step;
+	switch (getTimeStep())
+	{
+	case TimeStep::LINEAR:
+		return std::make_tuple(new_image, dt);
+		break;
+	case TimeStep::QUADRATIC:
+		return std::make_tuple(new_image, dt * dt);
+		break;
+	case TimeStep::DYNAMIC:
+		new_time_step = timeStepCurvature(new_image, N, dt);
+		max_step = getMaxTimeStep();
+		dt = (new_time_step > max_step || new_time_step < 0) ? max_step : new_time_step;
+		return std::make_tuple(new_image, dt);
+		break;
+	case TimeStep::CURVATUREHERMIT:
+		new_time_step = calculateTimeStepHermit(a_ns, a_n_dots, a_2s, a_3s, N, dt);
+		max_step = getMaxTimeStep();
+		dt = (new_time_step > max_step || new_time_step < 0) ? max_step : new_time_step;
+		return std::make_tuple(new_image, dt);
+		break;
+	}
+
+	return std::make_tuple(new_image, 0);
 }
 
-void IteratedHermit::startIntegration(std::vector<Body> initalImage, double eta, int iterations, std::string output_file)
+void IteratedHermit::startIntegration(std::vector<Body> initial_image, double eta, int iterations, std::string output_file)
 {
-	int N = initalImage.size();
+	int N = initial_image.size();
 	double time_step = eta;
 	//-------------------------------------
 	//        file setup
 	//-------------------------------------
 	std::ofstream File(output_file);
 	File << "t" << "\t";
-	for (int i = 0; i < initalImage.size(); i++) //output file setup
+	for (int i = 0; i < initial_image.size(); i++) //output file setup
 	{
 		File << "x_" + std::to_string(i) << "\t" << "y_" + std::to_string(i) << "\t" << "z_" + std::to_string(i) << "\t";
 	}
@@ -83,15 +111,16 @@ void IteratedHermit::startIntegration(std::vector<Body> initalImage, double eta,
 	//-------------------------------------
 	//            integration
 	//-------------------------------------
-	std::vector<Body> previousImage = initalImage;
+	std::vector<Body> previousImage = initial_image;
 	for (int i = 0; i < iterations; i++)
 	{
+		std::vector<Body> new_image;
 
 
-		std::vector<Body> newImage = integrate(previousImage, time_step);
+		std::tie(new_image, time_step) = integrate(previousImage, time_step, N);
 
 		File << time_step * i << "\t";
-		for (Body b : newImage) {
+		for (Body b : new_image) {
 			File << b.getPosition().getX() << "\t" << b.getPosition().getY() << "\t" << b.getPosition().getZ() << "\t";
 
 		}
@@ -99,35 +128,40 @@ void IteratedHermit::startIntegration(std::vector<Body> initalImage, double eta,
 		//-------------------------------------
 		//        conserved quantities
 		//-------------------------------------
-		double E = calculateEnergy(newImage, N);
+		double E = calculateEnergy(new_image, N);
 		File << E << "\t";
 		if (N == 2) {
-			Vector j = calculateAngularMomentum(newImage);
-			Vector e = calulateRungeLenz(newImage, j);
+			Vector j = calculateAngularMomentum(new_image);
+			Vector e = calulateRungeLenz(new_image, j);
 			double a = calculateMajorSemiAxis(j, e);
 			File << j.getLength() << "\t" << e.getLength() << "\t" << a;
 		}
 		File << "\n";
-		//--------------------------------------
-		//     calculate next time step
-		//--------------------------------------
-
-		switch (getTimeStep()) {
-		case TimeStep::LINEAR:
-			break;
-		case TimeStep::QUADRATIC:
-			break;
-		case TimeStep::CURVATURE:
-			time_step = timeStepCurvature(newImage, N, time_step);
-			break;
-		}
+		
 
 
-
-		previousImage = newImage; //prepare for next iteration
+		previousImage = new_image; //prepare for next iteration
 
 
 	}
 	File.close();
+
+}
+
+double IteratedHermit::calculateTimeStepHermit(
+	std::vector<Customvectors::Vector>& as,
+	std::vector<Customvectors::Vector>& a_dots,
+	std::vector<Customvectors::Vector>& a_2s,
+	std::vector<Customvectors::Vector>& a_3s, int N, double dt)
+{
+	std::vector<double> acc(N, 0);
+	for (int i = 0; i < N; i++)
+	{
+		double a_dot_i = a_dots[i].getLength();
+		double a_2 = a_2s[i].getLength();
+		acc[i] = sqrt((as[i].getLength() * a_2 + a_dot_i * a_dot_i) / (a_dot_i * a_3s[i].getLength() + a_2 * a_2));
+	}
+
+	return dt * *std::min_element(acc.begin(), acc.end());
 
 }

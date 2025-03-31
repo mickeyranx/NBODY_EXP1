@@ -13,9 +13,13 @@ private:
 	
 	//type of parameter
 	TimeStep tsf;
+	double maximum_timestep = 0;
 
 public:
-	NbodyIntegrator(TimeStep timeStepFunction);
+	NbodyIntegrator(TimeStep time_step_function);
+
+	//overloaded constructor to set minimum time step
+	NbodyIntegrator(TimeStep time_step_function, double max_step);
 	//calculates the next picture
 
 	
@@ -35,7 +39,11 @@ public:
 	//------------------------------------------------------
 	//			time step
 	//------------------------------------------------------
+	double getMaxTimeStep() {
+		return this->maximum_timestep;
+	}
 			
+
 	static double timeStepLinear(double t) { return t; };
 
 	static double timeStepQuadratic(double t) { return pow(t, 2); };

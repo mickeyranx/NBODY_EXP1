@@ -2,10 +2,11 @@
 #include <iostream>
 
 
-std::vector<Body> RK4::integrate(std::vector<Body> bodies, double dt)
+std::tuple<std::vector<Body>, double> RK4::integrate(std::vector<Body> bodies, double dt, int N)
 {
-	int N = bodies.size();
-
+	//------------------------------------------------
+	//                 integration
+	//------------------------------------------------
 	std::vector<Body> new_image = bodies;
 	std::vector<Body> new_temp_image_1 = {};
 	std::vector<Body> new_temp_image_2 = {};
@@ -57,20 +58,40 @@ std::vector<Body> RK4::integrate(std::vector<Body> bodies, double dt)
 		Customvectors::Vector v_4 = calculateAcceleration(new_temp_image_3, new_temp_image_3[i], N, i) * dt;
 		new_image[i].alterVelocity(v_4 * (1.0 / 6.0)); //add fourth order term
 	}
+	//------------------------------------------------
+	//          determine next time step
+	//------------------------------------------------
+	switch (getTimeStep())
+	{
+	case TimeStep::LINEAR:
+		return std::make_tuple(new_image, dt);
+		break;
+	case TimeStep::QUADRATIC:
+		return std::make_tuple(new_image, dt * dt);
+		break;
+	case TimeStep::DYNAMIC:
+		double new_time_step = timeStepCurvature(new_image, N, dt);
+		double max_step = getMaxTimeStep();
+		dt = (new_time_step > max_step || new_time_step < 0) ? max_step : new_time_step;
+		return std::make_tuple(new_image, dt);
+		break;
 
-	return new_image;
+	}
+
+	return std::make_tuple(new_image, 0);
+	
 }
 
-void RK4::startIntegration(std::vector<Body> initalImage, double eta, int iterations, std::string output_file)
+void RK4::startIntegration(std::vector<Body> initial_image, double eta, int iterations, std::string output_file)
 {
-	int N = initalImage.size();
+	int N = initial_image.size();
 	double time_step = eta;
 	//-------------------------------------
 	//        file setup
 	//-------------------------------------
 	std::ofstream File(output_file);
 	File << "t" << "\t";
-	for (int i = 0; i < initalImage.size(); i++) //output file setup
+	for (int i = 0; i < initial_image.size(); i++) //output file setup
 	{
 		File << "x_" + std::to_string(i) << "\t" << "y_" + std::to_string(i) << "\t" << "z_" + std::to_string(i) << "\t";
 	}
@@ -83,15 +104,15 @@ void RK4::startIntegration(std::vector<Body> initalImage, double eta, int iterat
 	//-------------------------------------
 	//            integration
 	//-------------------------------------
-	std::vector<Body> previousImage = initalImage;
+	std::vector<Body> previous_image = initial_image;
 	for (int i = 0; i < iterations; i++)
 	{
+		std::vector<Body> new_image;
 
-
-		std::vector<Body> newImage = integrate(previousImage, time_step);
+		std::tie(new_image, time_step) = integrate(previous_image, time_step, N);
 
 		File << time_step * i << "\t";
-		for (Body b : newImage) {
+		for (Body b : new_image) {
 			File << b.getPosition().getX() << "\t" << b.getPosition().getY() << "\t" << b.getPosition().getZ() << "\t";
 
 		}
@@ -99,32 +120,20 @@ void RK4::startIntegration(std::vector<Body> initalImage, double eta, int iterat
 		//-------------------------------------
 		//        conserved quantities
 		//-------------------------------------
-		double E = calculateEnergy(newImage, N);
+		double E = calculateEnergy(new_image, N);
 		File << E << "\t";
 		if (N == 2) {
-			Vector j = calculateAngularMomentum(newImage);
-			Vector e = calulateRungeLenz(newImage, j);
+			Vector j = calculateAngularMomentum(new_image);
+			Vector e = calulateRungeLenz(new_image, j);
 			double a = calculateMajorSemiAxis(j, e);
 			File << j.getLength() << "\t" << e.getLength() << "\t" << a;
 		}
 		File << "\n";
-		//--------------------------------------
-		//     calculate next time step
-		//--------------------------------------
-
-		switch (getTimeStep()) {
-		case TimeStep::LINEAR:
-			break;
-		case TimeStep::QUADRATIC:
-			break;
-		case TimeStep::CURVATURE:
-			time_step = timeStepCurvature(newImage, N, time_step);
-			break;
-		}
+		
 
 
 
-		previousImage = newImage; //prepare for next iteration
+		previous_image = new_image; //prepare for next iteration
 
 
 	}

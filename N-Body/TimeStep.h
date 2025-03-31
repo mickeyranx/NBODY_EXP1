@@ -3,7 +3,7 @@
 enum class TimeStep {
 	LINEAR,
 	QUADRATIC,
-	CURVATURE,
+	DYNAMIC,
 	CURVATUREHERMIT,
 	RKFOUR
 
