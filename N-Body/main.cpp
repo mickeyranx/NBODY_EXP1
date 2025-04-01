@@ -84,45 +84,18 @@ static std::vector<Body> setup(std::string file_name) {
 	return bodies_COM;
 
 }
+/*
+		open questions:
+				-kick drift for Velocity Verlet
+				-dynamic time step for hermit
+		TODO:
 
+	*/
 
 //main function 
 int main() {
 	clock_t start = clock();
-	/*
-		TODO: 
-		-implement dynamic time step for  RK4
-		-implement minimum time step for dynamic TS
-	*/
-	
-	//------------------------------------------------
-	//       setup and load data from files
-	//------------------------------------------------
-	string output_path = "output.txt";
-	
-	//inputfile-name for body data 
-	string input_name = "2body.txt";
-	//inputfile-name for integration data
-	//string input_name2 = "pla3.txt";
-	string input_name2 = "pl.1k.txt";
-	//string input_name2 = "pl.100.txt";
-	//string input_name2 = "in2.txt";
-	/*
-	ifstream File("input_files/" + input_name2);
-	int N;
-	double t_max;
-	double eta;
-	File >> N >> t_max >> eta;
-	cout << N << endl;
-	cout << t_max << " " << eta;
-	//timestep dt
-	*/
 
-	/*
-	//number of integrations
-	int n = 20;
-	std::vector<Body> starting_image = setup("input_files/" + input_name);
-	*/
 	//------------------------------------------------
 	//       select integrator and time step
 	//				  calculation
@@ -133,16 +106,50 @@ int main() {
 			-QUADRATIC
 			-CURVATURE
 			-HERMIT (exclusive for hermit and iterated hermit)
-			(-RKFOUR)
-	
-	*/
-	//switch between integrators via commenting
-	//Euler integrator = Euler(TimeStep::LINEAR);
-	//NbodyIntegrator integrator = new EulerChromer();
-	//NbodyIntegrator integrator = new ();
 
-	//Start the integration
-	//integrator.startIntegration(starting_image, eta, n, output_path);
+		available Integrators:
+			-Euler
+			-EulerChromer
+			-VelocityVerlet
+			-Hermit
+			-IteratedHermit
+			-Heun
+			-RK4
+		examples:
+		     RK4 integrator = RK4(TimeStep::LINEAR);
+			Euler integrator = Euler(TimeStep::DYNAMIC, 0.04); (overloaded constructor with TimeStep and max time_step)
+
+	*/
+
+
+	Euler integrator = Euler(TimeStep::LINEAR);
+
+	//------------------------------------------------
+	//       setup and load data from files
+	//------------------------------------------------
+	string output_path = "output.txt"; //filename of output-file
+	//inputfile-name for body data 
+	string input_name = "2body.txt"; //filename of constellation input
+	//string input_name2 = "pla3.txt";
+	string input_name2 = "pl.1k.txt"; //filename of integration-info input
+	//string input_name2 = "pl.100.txt";
+	//string input_name2 = "in2.txt";
+	
+	ifstream File("input_files/" + input_name2);
+	int N;
+	double t_max;
+	double eta;
+	File >> N >> t_max >> eta;	
+	File.close();
+	std::vector<Body> starting_image = setup("input_files/" + input_name);
+
+	/*-------------------------------------------
+		starting_image = starting constellation
+		eta = time step parameter
+		t_max = maximum time of integration
+	
+	--------------------------------------------*/
+	integrator.startIntegration(starting_image, eta, t_max, output_path); //Start the integration and writing to file 
 	
 	
 	clock_t end = clock();

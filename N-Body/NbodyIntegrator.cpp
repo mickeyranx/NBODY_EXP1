@@ -19,7 +19,7 @@ NbodyIntegrator::NbodyIntegrator(TimeStep time_step_function, double max_step)
 
 
 //this function will be overriden by the child classes and will never be used
-void NbodyIntegrator::startIntegration(std::vector<Body> bodies, double timeStep, int Iterations, std::string outputPath)
+void NbodyIntegrator::startIntegration(std::vector<Body> bodies, double timeStep, double max_integration_time, std::string outputPath)
 {
 	
 	std::cout << "test" << std::endl;
@@ -145,22 +145,22 @@ double NbodyIntegrator::calculateMajorSemiAxis(Customvectors::Vector j, Customve
 
 }
 
-double NbodyIntegrator::timeStepCurvature(std::vector<Body> &bodies, int N,double time_step) {
+double NbodyIntegrator::timeStepCurvature(std::vector<Body> &bodies, std::vector<Customvectors::Vector> &accelerations ,int N,double eta) {
 	
 	std::vector<double> vals = {};
 	for (int i = 0; i < N; i++)
 	{
 		Body b = bodies[i];
-		Customvectors::Vector acc = calculateAcceleration(bodies, b, N, i);
+		//Customvectors::Vector acc = calculateAcceleration(bodies, b, N, i);
 		Customvectors::Vector jerk = calculateJerk(bodies, b, N, i);
 		double jerk_norm = jerk.getLength();
 		if (jerk_norm == 0.0) continue;
-		vals.push_back(acc.getLength()/jerk.getLength());
+		vals.push_back(accelerations[i].getLength() / jerk.getLength());
 	}
 
 	if (vals.empty()) return -1.0; //if the list of jerks is empty return -1.0 
 	
-	return time_step * *std::min_element(vals.begin(), vals.end());
+	return eta * *std::min_element(vals.begin(), vals.end());
 
 
 }

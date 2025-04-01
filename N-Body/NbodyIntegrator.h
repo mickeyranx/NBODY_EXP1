@@ -24,7 +24,7 @@ public:
 
 	
 	//starts the Integration with 
-	virtual void startIntegration(std::vector<Body> bodies, double timeStep, int iterations, std::string outputPath);
+	virtual void startIntegration(std::vector<Body> bodies, double timeStep, double max_integration_time, std::string outputPath);
 	
 
 	//virtual void simulate(int Iterations, int N);
@@ -48,7 +48,7 @@ public:
 
 	static double timeStepQuadratic(double t) { return pow(t, 2); };
 
-	double timeStepCurvature(std::vector<Body>& bodies, int N ,double time_step);
+	double timeStepCurvature(std::vector<Body>& bodies, std::vector<Customvectors::Vector> &accelerations, int N ,double eta);
 
 	//------------------------------------------------------
 	//			conserved quantities

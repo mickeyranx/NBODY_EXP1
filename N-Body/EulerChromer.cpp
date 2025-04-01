@@ -1,51 +1,64 @@
 #include "EulerChromer.h"
 
 
-std::tuple<std::vector<Body>, double> EulerChromer::integrate(std::vector<Body> bodies, double dt, int N)
+std::tuple<std::vector<Body>, double> EulerChromer::integrate(std::vector<Body> &image, double eta, int N)
 {
+
+	std::vector<Customvectors::Vector> a_ns; //accelerations
+	//------------------------------------------------
+	//         calculate accelerations
+	//------------------------------------------------
+	for (int i = 0; i < N; i++)
+	{
+		a_ns.push_back(calculateAcceleration(image, image[i], N, i));
+	}
+
+	//------------------------------------------------
+	//        calculate time step
+	//------------------------------------------------
+	double dt = 0;
+	switch (getTimeStep())
+	{
+	case TimeStep::LINEAR:
+		dt = eta;
+		break;
+	case TimeStep::QUADRATIC:
+		dt = eta * eta;
+		break;
+	case TimeStep::DYNAMIC:
+		double new_time_step = timeStepCurvature(image, a_ns, N, eta);
+		double max_step = getMaxTimeStep();
+		dt = (new_time_step > max_step || new_time_step < 0) ? max_step : new_time_step;
+		break;
+	}
+
+	//------------------------------------------------
+	//          calculatate next image
+	//------------------------------------------------
+
 	std::vector<Body> new_image;
 	for (int i = 0; i < N; i++)
 	{
-		Customvectors::Vector a = EulerChromer::calculateAcceleration(bodies, bodies[i], N, i);
-		std::cout << "a = " << a.getLength() << std::endl;
-		Body current_body = bodies[i];
+		
+		Body current_body = image[i];
 		Customvectors::Vector v_n = current_body.getVelocity();
 		Customvectors::Vector r_n = current_body.getPosition();
-		Customvectors::Vector v_new = v_n + a * dt;
+		Customvectors::Vector v_new = v_n + a_ns[i] * dt;
 		Customvectors::Vector r_new = r_n + v_new * dt;
 		//add Body to newImage list with new position and velocity vectors
 		new_image.push_back(Body(current_body.getMass(), r_new, v_new));
 		
 	}
 
-	//------------------------------------------------
-	//          determine next time step
-	//------------------------------------------------
-	switch (getTimeStep())
-	{
-	case TimeStep::LINEAR:
-		return std::make_tuple(new_image, dt);
-		break;
-	case TimeStep::QUADRATIC:
-		return std::make_tuple(new_image, dt * dt);
-		break;
-	case TimeStep::DYNAMIC:
-		double new_time_step = timeStepCurvature(new_image, N, dt);
-		double max_step = getMaxTimeStep();
-		dt = (new_time_step > max_step || new_time_step < 0) ? max_step : new_time_step;
-		return std::make_tuple(new_image, dt);
-		break;
-
-	}
-
-	return std::make_tuple(new_image, 0);
+	return std::make_tuple(new_image, dt); 
 
 }
 
-void EulerChromer::startIntegration(std::vector<Body> initial_image, double eta, int iterations, std::string output_file)
+void EulerChromer::startIntegration(std::vector<Body> initial_image, double eta, double max_integration_time, std::string output_file)
 {
 	int N = initial_image.size();
-	double time_step = eta;
+	double time_passed = 0;
+	double time_step;
 	//-------------------------------------
 	//        file setup
 	//-------------------------------------
@@ -62,16 +75,32 @@ void EulerChromer::startIntegration(std::vector<Body> initial_image, double eta,
 	File << "\n";
 	File << std::fixed << std::setprecision(2);
 	//-------------------------------------
+	//          inital image
+	// ------------------------------------
+	File << time_passed << "\t";
+	for (Body b : initial_image) {
+		File << b.getPosition().getX() << "\t" << b.getPosition().getY() << "\t" << b.getPosition().getZ() << "\t";
+
+	}
+	double E = calculateEnergy(initial_image, N);
+	File << E << "\t";
+	if (N == 2) {
+		Vector j = calculateAngularMomentum(initial_image);
+		Vector e = calulateRungeLenz(initial_image, j);
+		double a = calculateMajorSemiAxis(j, e);
+		File << j.getLength() << "\t" << e.getLength() << "\t" << a;
+	}
+	File << "\n";
+	//-------------------------------------
 	//            integration
 	//-------------------------------------
 	std::vector<Body> previous_image = initial_image;
-	for (int i = 0; i < iterations; i++)
-	{
+	while (time_passed < max_integration_time) {
 		std::vector<Body> new_image;
 
-		std::tie(new_image, time_step) = integrate(previous_image, time_step, N);
+		std::tie(new_image, time_step) = integrate(previous_image, eta, N);
 
-		File << time_step * i << "\t";
+		File << time_passed << "\t";
 		for (Body b : new_image) {
 			File << b.getPosition().getX() << "\t" << b.getPosition().getY() << "\t" << b.getPosition().getZ() << "\t";
 
@@ -89,10 +118,11 @@ void EulerChromer::startIntegration(std::vector<Body> initial_image, double eta,
 			File << j.getLength() << "\t" << e.getLength() << "\t" << a;
 		}
 		File << "\n";
-		previous_image = new_image; //prepare for next iteration
 
+		time_passed += time_step;
+		previous_image = new_image; //prepare for next iteration
 
 	}
 
-
+	File.close();
 }

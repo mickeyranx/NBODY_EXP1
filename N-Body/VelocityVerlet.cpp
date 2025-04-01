@@ -3,24 +3,51 @@
 
 
 
-std::tuple<std::vector<Body>, double> VelocityVerlet::integrate(std::vector<Body> bodies, double dt, int N)
+std::tuple<std::vector<Body>, double> VelocityVerlet::integrate(std::vector<Body> &image,  double eta, int N)
 {
-	//------------------------------------------------
-	//          determine next image
-	//------------------------------------------------
-	std::vector<Body> new_temp_image = {};
+	
+	
+	
 	std::vector<Customvectors::Vector> a_ns = {};
+	//------------------------------------------------
+	//          calculate accelerations
+	//------------------------------------------------
+	for (int i = 0; i < N; i++)
+	{
+		a_ns.push_back(calculateAcceleration(image ,image[i], N, i));
+	}
+	//------------------------------------------------
+	//          determine time step
+	//------------------------------------------------
+	double dt = 0;
+	switch (getTimeStep())
+	{
+	case TimeStep::LINEAR:
+		dt = eta;
+		break;
+	case TimeStep::QUADRATIC:
+		dt = eta * eta;
+		break;
+	case TimeStep::DYNAMIC:
+		double new_time_step = timeStepCurvature(image, a_ns ,N, eta);
+		double max_step = getMaxTimeStep();
+		dt = (new_time_step > max_step || new_time_step < 0) ? max_step : new_time_step;
+		break;
+
+	}
+	std::vector<Body> new_temp_image = {};
+	//-------------------------------------------------
+	//                  integration
+	//-------------------------------------------------
 
 	for (int i = 0; i < N; i++)
 	{
-		Body current_body = bodies[i];
-		Customvectors::Vector a_n = calculateAcceleration(bodies, current_body, N, i);
+		Body current_body = image[i];
 		Customvectors::Vector v_n = current_body.getVelocity();
 		Customvectors::Vector r_n = current_body.getPosition();
 
-		Customvectors::Vector r_nn = r_n + v_n * dt + a_n * 0.5 * dt * dt;
+		Customvectors::Vector r_nn = r_n + v_n * dt + a_ns[i] * 0.5 * dt * dt;
 		current_body.setPosition(r_nn);
-		a_ns.push_back(a_n);
 		new_temp_image.push_back(current_body);
 		
 	}
@@ -31,46 +58,19 @@ std::tuple<std::vector<Body>, double> VelocityVerlet::integrate(std::vector<Body
 		Customvectors::Vector a_nn = calculateAcceleration(new_temp_image, current_body, N, i);
 		Customvectors::Vector v_n = current_body.getVelocity();
 		Customvectors::Vector v_nn; 
-		/*
-		if (getTimeStep() == TimeStep::DYNAMIC) { //kick-drift 
-			v_nn = v_n + 
-
-		}
-		else {
-			v_nn =  v_n + (a_ns[i] + a_nn) * dt;
-		}
-		*/
 		current_body.setVelocity(v_nn);
 		new_image.push_back(current_body);
 	}
 
-	//------------------------------------------------
-	//          determine next time step
-	//------------------------------------------------
-	switch (getTimeStep())
-	{
-	case TimeStep::LINEAR:
-		return std::make_tuple(new_image, dt);
-		break;
-	case TimeStep::QUADRATIC:
-		return std::make_tuple(new_image, dt * dt);
-		break;
-	case TimeStep::DYNAMIC:
-		double new_time_step = timeStepCurvature(new_image, N, dt);
-		double max_step = getMaxTimeStep();
-		dt = (new_time_step > max_step || new_time_step < 0) ? max_step : new_time_step;
-		return std::make_tuple(new_image, dt);
-		break;
 
-	}
-
-	return std::make_tuple(new_image, 0);
+	return std::make_tuple(new_image, dt);
 }
 
-void VelocityVerlet::startIntegration(std::vector<Body> initial_image, double eta, int iterations, std::string output_file)
+void VelocityVerlet::startIntegration(std::vector<Body> initial_image, double eta, double max_integration_time, std::string output_file)
 {
 	int N = initial_image.size();
-	double time_step = eta;
+	double time_passed = 0;
+	double time_step;
 	//-------------------------------------
 	//        file setup
 	//-------------------------------------
@@ -87,17 +87,33 @@ void VelocityVerlet::startIntegration(std::vector<Body> initial_image, double et
 	File << "\n";
 	File << std::fixed << std::setprecision(2);
 	//-------------------------------------
+	//          inital image
+	// ------------------------------------
+	File << time_passed << "\t";
+	for (Body b : initial_image) {
+		File << b.getPosition().getX() << "\t" << b.getPosition().getY() << "\t" << b.getPosition().getZ() << "\t";
+
+	}
+	double E = calculateEnergy(initial_image, N);
+	File << E << "\t";
+	if (N == 2) {
+		Vector j = calculateAngularMomentum(initial_image);
+		Vector e = calulateRungeLenz(initial_image, j);
+		double a = calculateMajorSemiAxis(j, e);
+		File << j.getLength() << "\t" << e.getLength() << "\t" << a;
+	}
+	File << "\n";
+	//-------------------------------------
 	//            integration
 	//-------------------------------------
 	std::vector<Body> previous_image = initial_image;
-	for (int i = 0; i < iterations; i++)
-	{
+	while (time_passed < max_integration_time) {
 		std::vector<Body> new_image;
 
 
-		std::tie(new_image, time_step) = integrate(previous_image, time_step, N);
+		std::tie(new_image, time_step) = integrate(previous_image, eta, N);
 
-		File << time_step * i << "\t";
+		File << time_passed << "\t";
 		for (Body b : new_image) {
 			File << b.getPosition().getX() << "\t" << b.getPosition().getY() << "\t" << b.getPosition().getZ() << "\t";
 
@@ -115,11 +131,14 @@ void VelocityVerlet::startIntegration(std::vector<Body> initial_image, double et
 			File << j.getLength() << "\t" << e.getLength() << "\t" << a;
 		}
 		File << "\n";
-		
+
+
+		time_passed += time_step;
 		previous_image = new_image; //prepare for next iteration
 
-
 	}
+
+
 	File.close();
 
 }
